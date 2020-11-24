@@ -61,6 +61,7 @@ import pw.thedrhax.util.Listener;
 import pw.thedrhax.util.Logger;
 import pw.thedrhax.util.PermissionUtils;
 import pw.thedrhax.util.Randomizer;
+import pw.thedrhax.util.Util;
 import pw.thedrhax.util.Version;
 
 public class SettingsActivity extends Activity {
@@ -255,21 +256,17 @@ public class SettingsActivity extends Activity {
             final CheckBoxPreference AMOLEDTheme = (CheckBoxPreference)
                     screen.findPreference("pref_AMOLED_theme");
 
-            darkTheme.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            Preference.OnPreferenceChangeListener listener = new Preference.OnPreferenceChangeListener() {
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    ((SettingsActivity)getActivity()).restartActivity();
+                    ((SettingsActivity)getActivity()).onBackPressed();
+                    ((SettingsActivity)getActivity()).recreate();
                     return true;
                 }
-            });
+            };
 
-            AMOLEDTheme.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    ((SettingsActivity)getActivity()).restartActivity();
-                    return true;
-                }
-            });
+            darkTheme.setOnPreferenceChangeListener(listener);
+            AMOLEDTheme.setOnPreferenceChangeListener(listener);
         }
     }
 
@@ -475,6 +472,7 @@ public class SettingsActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setTheme(Util.getSavedTheme(this));
 
         // Populate preferences
         final FragmentManager fmanager = getFragmentManager();
@@ -588,8 +586,6 @@ public class SettingsActivity extends Activity {
             }
         });
 
-        setTheme(getSavedTheme());
-
         // About
         Preference pref_about = fragment.findPreference("pref_about");
         pref_about.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
@@ -605,18 +601,5 @@ public class SettingsActivity extends Activity {
             energy_saving_setup();
         if (Build.VERSION.SDK_INT >= 28)
             location_permission_setup();
-    }
-
-    private int getSavedTheme() {
-        if (settings.getBoolean("pref_dark_theme", false)) {
-            if (settings.getBoolean("pref_AMOLED_theme", false)) {
-                return R.style.AppBaseTheme_Night_AMOLED;
-            } else {
-                return R.style.AppBaseTheme_Night;
-            }
-        }
-        else {
-            return R.style.AppBaseTheme;
-        }
     }
 }
