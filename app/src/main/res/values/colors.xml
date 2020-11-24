@@ -3,4 +3,10 @@
     <color name="colorPrimary">#E51C23</color>
     <color name="colorPrimaryDark">#D01716</color>
     <color name="colorAccent">#FF6E40</color>
+    <color name="colorBackground">#FFFFFF</color>
+    <color name="colorBackgroundNight">#2B2B2B</color>
+    <color name="colorTextNight">#dedede</color>
+    <color name="colorSecondaryTextNight">#989898</color>
+    <color name="colorButton">#606060</color>
+    <color name="colorBackgroundAMOLED">#000000</color>
 </resources>

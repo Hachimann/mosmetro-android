@@ -212,7 +212,15 @@
     <string name="pref_updater_branch_stable">Основные ветки</string>
     <string name="pref_updater_branch_experimental">Экспериментальные ветки</string>
     <string name="pref_debug">Отладка</string>
+    <string name="pref_themes">Темы</string>
+    <string name="pref_dark_theme">Включить темную тему</string>
+    <string name="pref_dark_theme_summary_off">Темная тема отключена</string>
+    <string name="pref_dark_theme_summary_on">Темная тема включена</string>
+    <string name="pref_AMOLED_theme">Включить AMOLED тему</string>
+    <string name="pref_AMOLED_theme_summary_off">AMOLED тема отключена</string>
+    <string name="pref_AMOLED_theme_summary_on">AMOLED тема включена</string>
     <string name="pref_debug_summary">Автоматические отчёты, LogCat, и т.д.</string>
+    <string name="pref_themes_summary">Настройка различных тем для приложения</string>
     <string name="pref_mosmetro_v3_summary">Этот алгоритм использовался во время ЧМ 2018 по футболу в Москве и Санкт-Петербурге. В данный момент он отключён, так что, скорее всего, эта настройка ни на что не повлияет.</string>
     <string name="pref_mosmetro_v2wv">MosMetroV2WV (бета)</string>
     <string name="pref_mosmetro_v2wv_summary">Расширение алгоритма MosMetroV2, использующее браузер в фоновом режиме вместо заранее заданных HTTP запросов. Медленнее, но безопаснее, если провайдер снова начнёт принимать меры против пользователей данного приложения.</string>

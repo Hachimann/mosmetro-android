@@ -6,4 +6,30 @@
         <item name="android:colorAccent">@color/colorAccent</item>
     </style>
     <style name="AppBaseTheme.Dialog" parent="@android:style/Theme.Material.Light.Dialog" />
+    <style name="AppBaseTheme.Night" parent="@android:style/Theme.Material.Light.DarkActionBar">
+        <item name="android:colorPrimary">@color/colorPrimary</item>
+        <item name="android:colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="android:colorAccent">@color/colorAccent</item>
+        <item name="android:colorBackground">@color/colorBackgroundNight</item>
+        <item name="android:textColor">@color/colorTextNight</item>
+        <item name="android:textColorSecondary">@color/colorSecondaryTextNight</item>
+        <item name="android:colorButtonNormal">@color/colorButton</item>
+        <item name="android:checkboxStyle">@style/CheckBoxStyle</item>
+        <item name="android:alertDialogTheme">@style/AlertDialogTheme</item>
+        <item name="android:textColorPrimary">@color/colorSecondaryTextNight</item>
+    </style>
+    <style name="CheckBoxStyle" parent="Widget.AppCompat.CompoundButton.CheckBox">
+        <item name="android:textColor">@color/colorTextNight</item>
+    </style>
+    <style name="AlertDialogTheme" parent="@android:style/Theme.Material.Light.Dialog">
+        <item name="android:colorBackground">@color/colorBackgroundNight</item>
+        <item name="android:textColor">@color/colorTextNight</item>
+        <item name="android:textColorAlertDialogListItem">@color/colorSecondaryTextNight</item>
+        <item name="android:textColorPrimary">@color/colorSecondaryTextNight</item>
+    </style>
+    <style name="AppBaseTheme.Night.AMOLED">
+        <item name="android:colorPrimary">@color/colorBackgroundAMOLED</item>
+        <item name="android:colorPrimaryDark">@color/colorBackgroundAMOLED</item>
+        <item name="android:colorBackground">@color/colorBackgroundAMOLED</item>
+    </style>
 </resources>

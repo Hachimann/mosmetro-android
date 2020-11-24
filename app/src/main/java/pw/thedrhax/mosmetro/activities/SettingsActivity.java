@@ -241,6 +241,43 @@ public class SettingsActivity extends Activity {
         }
     }
 
+    public static class ThemesSettingsFragment extends NestedFragment {
+        @Override
+        public void onCreate(@Nullable Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            setTitle(getString(R.string.pref_themes));
+            addPreferencesFromResource(R.xml.pref_themes);
+
+            PreferenceScreen screen = getPreferenceScreen();
+
+            final CheckBoxPreference darkTheme = (CheckBoxPreference)
+                    screen.findPreference("pref_dark_theme");
+            final CheckBoxPreference AMOLEDTheme = (CheckBoxPreference)
+                    screen.findPreference("pref_AMOLED_theme");
+
+            darkTheme.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(Preference preference, Object newValue) {
+                    ((SettingsActivity)getActivity()).restartActivity();
+                    return true;
+                }
+            });
+
+            AMOLEDTheme.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(Preference preference, Object newValue) {
+                    ((SettingsActivity)getActivity()).restartActivity();
+                    return true;
+                }
+            });
+        }
+    }
+
+    public void restartActivity() {
+        onBackPressed();
+        this.recreate();
+    }
+
     public static class AboutFragment extends NestedFragment {
         @Override
         public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -541,6 +578,18 @@ public class SettingsActivity extends Activity {
             }
         });
 
+        // Themes
+        Preference pref_themes = fragment.findPreference("pref_themes");
+        pref_themes.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+            @Override
+            public boolean onPreferenceClick(Preference preference) {
+                replaceFragment("themes", new ThemesSettingsFragment());
+                return true;
+            }
+        });
+
+        setTheme(getSavedTheme());
+
         // About
         Preference pref_about = fragment.findPreference("pref_about");
         pref_about.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
@@ -556,5 +605,18 @@ public class SettingsActivity extends Activity {
             energy_saving_setup();
         if (Build.VERSION.SDK_INT >= 28)
             location_permission_setup();
+    }
+
+    private int getSavedTheme() {
+        if (settings.getBoolean("pref_dark_theme", false)) {
+            if (settings.getBoolean("pref_AMOLED_theme", false)) {
+                return R.style.AppBaseTheme_Night_AMOLED;
+            } else {
+                return R.style.AppBaseTheme_Night;
+            }
+        }
+        else {
+            return R.style.AppBaseTheme;
+        }
     }
 }

@@ -18,7 +18,7 @@
         android:summary="@string/view_log_summary">
 
         <intent android:action="pw.thedrhax.mosmetro.activities.DebugActivity">
-            <extra android:name="view_only" android:value="true" />
+<!--            <extra android:name="view_only" android:value="true" />-->
         </intent>
     </Preference>
 
@@ -48,6 +48,11 @@
             android:key="pref_debug"
             android:title="@string/pref_debug"
             android:summary="@string/pref_debug_summary" />
+
+        <Preference
+            android:key="pref_themes"
+            android:title="@string/pref_themes"
+            android:summary="@string/pref_themes_summary" />
 
     </PreferenceCategory>
 

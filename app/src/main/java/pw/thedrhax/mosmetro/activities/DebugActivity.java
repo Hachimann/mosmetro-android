@@ -66,11 +66,18 @@ public class DebugActivity extends Activity {
     // Callbacks
     private Logger.Callback logger_callback;
 
+    //SharedPreferences
+    private SharedPreferences settings;
+
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+        settings = PreferenceManager.getDefaultSharedPreferences(this);
+        setTheme(getSavedTheme());
 		setContentView(R.layout.debug_activity);
+
+
 
         button_connect = (Button) findViewById(R.id.button_connect);
         service_state = new BroadcastReceiver() {
@@ -219,6 +226,19 @@ public class DebugActivity extends Activity {
         finish();
     }
 
+    private int getSavedTheme() {
+        if (settings.getBoolean("pref_dark_theme", false)) {
+            if (settings.getBoolean("pref_AMOLED_theme", false)) {
+                return R.style.AppBaseTheme_Night_AMOLED;
+            } else {
+                return R.style.AppBaseTheme_Night;
+            }
+        }
+        else {
+            return R.style.AppBaseTheme;
+        }
+    }
+
     public void button_connect (final View view) {
         Intent service = new Intent(this, ConnectionService.class);
         if (service_running)
@@ -250,7 +270,6 @@ public class DebugActivity extends Activity {
         public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
             TextView view = new TextView(parent.getContext());
             view.setTypeface(Typeface.MONOSPACE);
-            view.setTextColor(Color.BLACK);
             view.setTextSize(14);
             return new ViewHolder(view);
         }
