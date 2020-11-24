@@ -47,6 +47,7 @@ import java.util.LinkedList;
 import pw.thedrhax.mosmetro.R;
 import pw.thedrhax.mosmetro.services.ConnectionService;
 import pw.thedrhax.util.Logger;
+import pw.thedrhax.util.Util;
 
 public class DebugActivity extends Activity {
     public static final String INTENT_VIEW_ONLY = "view_only";
@@ -66,18 +67,12 @@ public class DebugActivity extends Activity {
     // Callbacks
     private Logger.Callback logger_callback;
 
-    //SharedPreferences
-    private SharedPreferences settings;
-
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-        settings = PreferenceManager.getDefaultSharedPreferences(this);
-        setTheme(getSavedTheme());
-		setContentView(R.layout.debug_activity);
-
-
+        setTheme(Util.getSavedTheme(this));
+        setContentView(R.layout.debug_activity);
 
         button_connect = (Button) findViewById(R.id.button_connect);
         service_state = new BroadcastReceiver() {
@@ -224,19 +219,6 @@ public class DebugActivity extends Activity {
                         .addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
         );
         finish();
-    }
-
-    private int getSavedTheme() {
-        if (settings.getBoolean("pref_dark_theme", false)) {
-            if (settings.getBoolean("pref_AMOLED_theme", false)) {
-                return R.style.AppBaseTheme_Night_AMOLED;
-            } else {
-                return R.style.AppBaseTheme_Night;
-            }
-        }
-        else {
-            return R.style.AppBaseTheme;
-        }
     }
 
     public void button_connect (final View view) {

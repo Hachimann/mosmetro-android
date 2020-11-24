@@ -26,6 +26,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+import pw.thedrhax.mosmetro.R;
+
 public final class Util {
     private Util() {}
 
@@ -41,6 +43,20 @@ public final class Util {
         } catch (ClassCastException ignored) {}
 
         return def_value;
+    }
+
+    public static int getSavedTheme(Context context) {
+        final SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(context);
+
+        if (settings.getBoolean("pref_dark_theme", false)) {
+            if (settings.getBoolean("pref_AMOLED_theme", false)) {
+                return R.style.AppBaseTheme_Night_AMOLED;
+            } else {
+                return R.style.AppBaseTheme_Night;
+            }
+        } else {
+            return R.style.AppBaseTheme;
+        }
     }
 
     // Source: https://stackoverflow.com/a/34836992
