@@ -25,6 +25,7 @@ import android.view.View;
 import android.widget.CheckBox;
 
 import pw.thedrhax.mosmetro.R;
+import pw.thedrhax.util.Util;
 
 public class ShortcutDialog extends Activity {
     private CheckBox check_background;
@@ -35,6 +36,7 @@ public class ShortcutDialog extends Activity {
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setTheme(Util.getSavedTheme(this));
         setContentView(R.layout.shortcut_activity);
 
         check_background = (CheckBox)findViewById(R.id.check_background);

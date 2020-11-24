@@ -59,6 +59,30 @@ public final class Util {
         }
     }
 
+    public static int getBarColor(Context context, boolean isStatusBar) {
+        final SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(context);
+
+        if (settings.getBoolean("pref_dark_theme", false)) {
+            if (settings.getBoolean("pref_AMOLED_theme", false)) {
+                return R.color.colorBackgroundAMOLED;
+            } else {
+                if (isStatusBar) {
+                    return R.color.colorPrimary;
+                }
+                else {
+                    return R.color.colorPrimaryDark;
+                }
+            }
+        } else {
+            if (isStatusBar) {
+                return R.color.colorPrimary;
+            }
+            else {
+                return R.color.colorPrimaryDark;
+            }
+        }
+    }
+
     // Source: https://stackoverflow.com/a/34836992
     public static String readAsset(Context context, String filename) throws IOException {
         BufferedReader reader = new BufferedReader(

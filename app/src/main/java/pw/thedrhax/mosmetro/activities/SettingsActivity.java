@@ -31,6 +31,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.CheckBoxPreference;
@@ -46,6 +47,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -74,13 +76,31 @@ public class SettingsActivity extends Activity {
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.preferences);
+            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.O) {
+                ActionBar bar = getActivity().getActionBar();
+                if (bar != null) {
+                    bar.setTitle(R.string.app_name);
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        bar.setBackgroundDrawable(new ColorDrawable(getResources().getColor(Util.getBarColor(getActivity(), true))));
+                        Window window = getActivity().getWindow();
+                        window.setStatusBarColor(getResources().getColor(Util.getBarColor(getActivity(), false)));
+                    }
+                }
+            }
         }
     }
 
     public static class NestedFragment extends PreferenceFragment {
         protected void setTitle(String title) {
             ActionBar bar = getActivity().getActionBar();
-            if (bar != null) bar.setTitle(title);
+            if (bar != null) {
+                bar.setTitle(title);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    bar.setBackgroundDrawable(new ColorDrawable(getResources().getColor(Util.getBarColor(getActivity(), true))));
+                    Window window = getActivity().getWindow();
+                    window.setStatusBarColor(getResources().getColor(Util.getBarColor(getActivity(), false)));
+                }
+            }
         }
 
         @Override
@@ -268,11 +288,6 @@ public class SettingsActivity extends Activity {
             darkTheme.setOnPreferenceChangeListener(listener);
             AMOLEDTheme.setOnPreferenceChangeListener(listener);
         }
-    }
-
-    public void restartActivity() {
-        onBackPressed();
-        this.recreate();
     }
 
     public static class AboutFragment extends NestedFragment {
@@ -492,6 +507,12 @@ public class SettingsActivity extends Activity {
 
                     if (root) { // reset to defaults
                         bar.setTitle(R.string.app_name);
+                    }
+
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        bar.setBackgroundDrawable(new ColorDrawable(getResources().getColor(Util.getBarColor(SettingsActivity.this, true))));
+                        Window window = getWindow();
+                        window.setStatusBarColor(getResources().getColor(Util.getBarColor(SettingsActivity.this, false)));
                     }
                 }
             }
