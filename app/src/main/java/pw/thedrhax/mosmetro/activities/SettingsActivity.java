@@ -62,6 +62,7 @@ import pw.thedrhax.util.Listener;
 import pw.thedrhax.util.Logger;
 import pw.thedrhax.util.PermissionUtils;
 import pw.thedrhax.util.Randomizer;
+import pw.thedrhax.util.Util;
 import pw.thedrhax.util.Version;
 
 public class SettingsActivity extends AppCompatActivity {
@@ -239,6 +240,34 @@ public class SettingsActivity extends AppCompatActivity {
             CheckBoxPreference pref_debug_logcat =
                     (CheckBoxPreference) getPreferenceScreen().findPreference("pref_debug_logcat");
             pref_debug_logcat.setOnPreferenceChangeListener(reload_logger);
+        }
+    }
+
+    public static class ThemesSettingsFragment extends NestedFragment {
+        @Override
+        public void onCreate(@Nullable Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            setTitle(getString(R.string.pref_themes));
+            addPreferencesFromResource(R.xml.pref_themes);
+
+            PreferenceScreen screen = getPreferenceScreen();
+
+            final CheckBoxPreference darkTheme = (CheckBoxPreference)
+                    screen.findPreference("pref_dark_theme");
+            final CheckBoxPreference AMOLEDTheme = (CheckBoxPreference)
+                    screen.findPreference("pref_AMOLED_theme");
+
+            Preference.OnPreferenceChangeListener listener = new Preference.OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(Preference preference, Object newValue) {
+                    ((SettingsActivity)getActivity()).onBackPressed();
+                    ((SettingsActivity)getActivity()).recreate();
+                    return true;
+                }
+            };
+
+            darkTheme.setOnPreferenceChangeListener(listener);
+            AMOLEDTheme.setOnPreferenceChangeListener(listener);
         }
     }
 
@@ -439,6 +468,7 @@ public class SettingsActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setTheme(Util.getSavedTheme(this));
 
         // Populate preferences
         final FragmentManager fmanager = getFragmentManager();
@@ -538,6 +568,16 @@ public class SettingsActivity extends AppCompatActivity {
             @Override
             public boolean onPreferenceClick(Preference preference) {
                 replaceFragment("debug", new DebugSettingsFragment());
+                return true;
+            }
+        });
+
+        // Themes
+        Preference pref_themes = fragment.findPreference("pref_themes");
+        pref_themes.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+            @Override
+            public boolean onPreferenceClick(Preference preference) {
+                replaceFragment("themes", new ThemesSettingsFragment());
                 return true;
             }
         });

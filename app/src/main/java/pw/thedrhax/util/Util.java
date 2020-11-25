@@ -22,6 +22,8 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
+import androidx.appcompat.app.AppCompatDelegate;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -49,37 +51,16 @@ public final class Util {
         final SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(context);
 
         if (settings.getBoolean("pref_dark_theme", false)) {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
             if (settings.getBoolean("pref_AMOLED_theme", false)) {
-                return R.style.AppBaseTheme_Night_AMOLED;
-            } else {
-                return R.style.AppBaseTheme_Night;
-            }
-        } else {
-            return R.style.AppBaseTheme;
-        }
-    }
-
-    public static int getBarColor(Context context, boolean isStatusBar) {
-        final SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(context);
-
-        if (settings.getBoolean("pref_dark_theme", false)) {
-            if (settings.getBoolean("pref_AMOLED_theme", false)) {
-                return R.color.colorBackgroundAMOLED;
-            } else {
-                if (isStatusBar) {
-                    return R.color.colorPrimary;
-                }
-                else {
-                    return R.color.colorPrimaryDark;
-                }
-            }
-        } else {
-            if (isStatusBar) {
-                return R.color.colorPrimary;
+                return R.style.AppBaseTheme_AMOLED;
             }
             else {
-                return R.color.colorPrimaryDark;
+                return R.style.AppBaseTheme;
             }
+        } else {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+            return R.style.AppBaseTheme;
         }
     }
 
