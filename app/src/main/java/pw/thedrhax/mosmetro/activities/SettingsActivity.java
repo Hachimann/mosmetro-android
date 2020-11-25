@@ -19,8 +19,6 @@
 package pw.thedrhax.mosmetro.activities;
 
 import android.annotation.SuppressLint;
-import android.app.ActionBar;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentManager;
@@ -31,7 +29,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.CheckBoxPreference;
@@ -40,17 +37,18 @@ import android.preference.PreferenceCategory;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.preference.PreferenceScreen;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.Window;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 
 import org.acra.ACRA;
 
@@ -64,10 +62,9 @@ import pw.thedrhax.util.Listener;
 import pw.thedrhax.util.Logger;
 import pw.thedrhax.util.PermissionUtils;
 import pw.thedrhax.util.Randomizer;
-import pw.thedrhax.util.Util;
 import pw.thedrhax.util.Version;
 
-public class SettingsActivity extends Activity {
+public class SettingsActivity extends AppCompatActivity {
     private SettingsFragment fragment;
     private Listener<Map<String,UpdateCheckTask.Branch>> branches;
     private SharedPreferences settings;
@@ -77,31 +74,13 @@ public class SettingsActivity extends Activity {
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.preferences);
-            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.O) {
-                ActionBar bar = getActivity().getActionBar();
-                if (bar != null) {
-                    bar.setTitle(R.string.app_name);
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                        bar.setBackgroundDrawable(new ColorDrawable(getResources().getColor(Util.getBarColor(getActivity(), true))));
-                        Window window = getActivity().getWindow();
-                        window.setStatusBarColor(getResources().getColor(Util.getBarColor(getActivity(), false)));
-                    }
-                }
-            }
         }
     }
 
     public static class NestedFragment extends PreferenceFragment {
         protected void setTitle(String title) {
-            ActionBar bar = getActivity().getActionBar();
-            if (bar != null) {
-                bar.setTitle(title);
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    bar.setBackgroundDrawable(new ColorDrawable(getResources().getColor(Util.getBarColor(getActivity(), true))));
-                    Window window = getActivity().getWindow();
-                    window.setStatusBarColor(getResources().getColor(Util.getBarColor(getActivity(), false)));
-                }
-            }
+            ActionBar bar = ((AppCompatActivity)getActivity()).getSupportActionBar();
+            if (bar != null) bar.setTitle(title);
         }
 
         @Override
@@ -263,34 +242,6 @@ public class SettingsActivity extends Activity {
         }
     }
 
-    public static class ThemesSettingsFragment extends NestedFragment {
-        @Override
-        public void onCreate(@Nullable Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            setTitle(getString(R.string.pref_themes));
-            addPreferencesFromResource(R.xml.pref_themes);
-
-            PreferenceScreen screen = getPreferenceScreen();
-
-            final CheckBoxPreference darkTheme = (CheckBoxPreference)
-                    screen.findPreference("pref_dark_theme");
-            final CheckBoxPreference AMOLEDTheme = (CheckBoxPreference)
-                    screen.findPreference("pref_AMOLED_theme");
-
-            Preference.OnPreferenceChangeListener listener = new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    ((SettingsActivity)getActivity()).onBackPressed();
-                    ((SettingsActivity)getActivity()).recreate();
-                    return true;
-                }
-            };
-
-            darkTheme.setOnPreferenceChangeListener(listener);
-            AMOLEDTheme.setOnPreferenceChangeListener(listener);
-        }
-    }
-
     public static class AboutFragment extends NestedFragment {
         @Override
         public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -304,7 +255,7 @@ public class SettingsActivity extends Activity {
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.settings_activity, menu);
-        return true;
+        return super.onCreateOptionsMenu(menu);
     }
 
     private void donate_dialog() {
@@ -488,7 +439,6 @@ public class SettingsActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setTheme(Util.getSavedTheme(this));
 
         // Populate preferences
         final FragmentManager fmanager = getFragmentManager();
@@ -502,18 +452,12 @@ public class SettingsActivity extends Activity {
             public void onBackStackChanged() {
                 boolean root = fmanager.getBackStackEntryCount() == 0;
 
-                ActionBar bar = getActionBar();
+                ActionBar bar = getSupportActionBar();
                 if (bar != null) {
                     bar.setDisplayHomeAsUpEnabled(!root);
 
                     if (root) { // reset to defaults
                         bar.setTitle(R.string.app_name);
-                    }
-
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                        bar.setBackgroundDrawable(new ColorDrawable(getResources().getColor(Util.getBarColor(SettingsActivity.this, true))));
-                        Window window = getWindow();
-                        window.setStatusBarColor(getResources().getColor(Util.getBarColor(SettingsActivity.this, false)));
                     }
                 }
             }
@@ -594,16 +538,6 @@ public class SettingsActivity extends Activity {
             @Override
             public boolean onPreferenceClick(Preference preference) {
                 replaceFragment("debug", new DebugSettingsFragment());
-                return true;
-            }
-        });
-
-        // Themes
-        Preference pref_themes = fragment.findPreference("pref_themes");
-        pref_themes.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-            @Override
-            public boolean onPreferenceClick(Preference preference) {
-                replaceFragment("themes", new ThemesSettingsFragment());
                 return true;
             }
         });
