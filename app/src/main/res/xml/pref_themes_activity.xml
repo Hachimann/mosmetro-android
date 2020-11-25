@@ -1,0 +1,19 @@
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <CheckBoxPreference
+        android:key="pref_dark_theme"
+        android:title="@string/pref_dark_theme"
+        android:summaryOff="@string/pref_dark_theme_summary_off"
+        android:summaryOn="@string/pref_dark_theme_summary_on"
+        android:defaultValue="false" />
+
+    <CheckBoxPreference
+        android:dependency="pref_dark_theme"
+        android:key="pref_AMOLED_theme"
+        android:title="@string/pref_AMOLED_theme"
+        android:summaryOff="@string/pref_AMOLED_theme_summary_off"
+        android:summaryOn="@string/pref_AMOLED_theme_summary_on"
+        android:defaultValue="false" />
+
+</PreferenceScreen>

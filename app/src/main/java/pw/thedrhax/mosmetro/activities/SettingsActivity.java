@@ -42,6 +42,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -53,6 +54,7 @@ import android.widget.Toast;
 import org.acra.ACRA;
 
 import java.util.Map;
+import java.util.Objects;
 
 import pw.thedrhax.mosmetro.R;
 import pw.thedrhax.mosmetro.preferences.LoginFormPreference;
@@ -65,7 +67,7 @@ import pw.thedrhax.util.Randomizer;
 import pw.thedrhax.util.Util;
 import pw.thedrhax.util.Version;
 
-public class SettingsActivity extends AppCompatActivity {
+public class SettingsActivity extends AppCompatActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
     private SettingsFragment fragment;
     private Listener<Map<String,UpdateCheckTask.Branch>> branches;
     private SharedPreferences settings;
@@ -260,8 +262,15 @@ public class SettingsActivity extends AppCompatActivity {
             Preference.OnPreferenceChangeListener listener = new Preference.OnPreferenceChangeListener() {
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
+
                     ((SettingsActivity)getActivity()).onBackPressed();
-                    ((SettingsActivity)getActivity()).recreate();
+                    if (android.os.Build.VERSION.SDK_INT >= 27) {
+                        ((SettingsActivity)getActivity()).recreate();
+                    } else {
+                        Intent intent = ((SettingsActivity)getActivity()).getIntent();
+                        ((SettingsActivity)getActivity()).finish();
+                        startActivity(intent);
+                    }
                     return true;
                 }
             };
@@ -470,6 +479,9 @@ public class SettingsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setTheme(Util.getSavedTheme(this));
 
+        SharedPreferences sharedPreferences = androidx.preference.PreferenceManager.getDefaultSharedPreferences(this);
+        sharedPreferences.registerOnSharedPreferenceChangeListener(this);
+
         // Populate preferences
         final FragmentManager fmanager = getFragmentManager();
         fragment = new SettingsFragment();
@@ -577,7 +589,8 @@ public class SettingsActivity extends AppCompatActivity {
         pref_themes.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
             @Override
             public boolean onPreferenceClick(Preference preference) {
-                replaceFragment("themes", new ThemesSettingsFragment());
+//                replaceFragment("themes", new ThemesSettingsFragment());
+                startActivity(new Intent(SettingsActivity.this, ThemesActivity.class));
                 return true;
             }
         });
@@ -597,5 +610,12 @@ public class SettingsActivity extends AppCompatActivity {
             energy_saving_setup();
         if (Build.VERSION.SDK_INT >= 28)
             location_permission_setup();
+    }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        if (key.equals("pref_dark_theme") || key.equals("pref_AMOLED_theme")) {
+            this.recreate();
+        }
     }
 }
