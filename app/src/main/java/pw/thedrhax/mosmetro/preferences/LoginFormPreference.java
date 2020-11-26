@@ -2,22 +2,21 @@ package pw.thedrhax.mosmetro.preferences;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.res.TypedArray;
 import android.os.Build;
-import android.preference.DialogPreference;
-import android.preference.PreferenceManager;
 import android.util.AttributeSet;
-import android.view.LayoutInflater;
-import android.view.View;
 import android.widget.EditText;
 
 import androidx.annotation.RequiresApi;
+import androidx.preference.DialogPreference;
+import androidx.preference.PreferenceManager;
 
 import pw.thedrhax.mosmetro.R;
 
 public class LoginFormPreference extends DialogPreference {
     private SharedPreferences settings;
-    private EditText text_login;
-    private EditText text_password;
+    private String key_login = getKey() + "_login";
+    private String key_password = getKey() + "_password";
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public LoginFormPreference(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
@@ -31,8 +30,10 @@ public class LoginFormPreference extends DialogPreference {
     }
 
     public LoginFormPreference(Context context, AttributeSet attrs) {
-        super(context, attrs);
+        super(context, attrs, R.attr.preferenceStyle);
         init(context);
+        setPositiveButtonText(R.string.positive_button_text);
+        setNegativeButtonText(R.string.cancel);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
@@ -40,34 +41,30 @@ public class LoginFormPreference extends DialogPreference {
         super(context);
         init(context);
     }
-    
-    private void init(Context context) {
-        settings = PreferenceManager.getDefaultSharedPreferences(context);
-    };
 
     @Override
-    protected View onCreateDialogView() {
-        View v = LayoutInflater
-                .from(getContext())
-                .inflate(R.layout.loginform_preference, null);
-
-        text_login = (EditText) v.findViewById(R.id.text_login);
-        text_login.setText(settings.getString(getKey() + "_login", ""));
-
-        text_password = (EditText) v.findViewById(R.id.text_password);
-        text_password.setText(settings.getString(getKey() + "_password", ""));
-
-        return v;
+    protected Object onGetDefaultValue(TypedArray a, int index) {
+        return a.getInt(index, 0);
     }
 
     @Override
-    protected void onDialogClosed(boolean positiveResult) {
-        if (positiveResult)
-            settings.edit()
-                    .putString(getKey() + "_login", text_login.getText().toString())
-                    .putString(getKey() + "_password", text_password.getText().toString())
-                    .apply();
+    public int getDialogLayoutResource() {
+        return R.layout.loginform_preference;
+    }
 
-        super.onDialogClosed(positiveResult);
+    private void init(Context context) {
+        settings = PreferenceManager.getDefaultSharedPreferences(context);
+    }
+
+    public SharedPreferences getSettings() {
+        return settings;
+    }
+
+    public String getKey_login() {
+        return key_login;
+    }
+
+    public String getKey_password() {
+        return key_password;
     }
 }

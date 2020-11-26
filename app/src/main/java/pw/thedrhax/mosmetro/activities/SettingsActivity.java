@@ -1,28 +1,6 @@
-/**
- * Wi-Fi в метро (pw.thedrhax.mosmetro, Moscow Wi-Fi autologin)
- * Copyright © 2015 Dmitry Karikh <the.dr.hax@gmail.com>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
 package pw.thedrhax.mosmetro.activities;
 
 import android.annotation.SuppressLint;
-import android.app.AlertDialog;
-import android.app.Fragment;
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -31,33 +9,38 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
-import android.preference.CheckBoxPreference;
-import android.preference.Preference;
-import android.preference.PreferenceCategory;
-import android.preference.PreferenceFragment;
-import android.preference.PreferenceManager;
-import android.preference.PreferenceScreen;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.app.AppCompatDelegate;
-
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.View;
-import android.widget.TextView;
-import android.widget.Toast;
+import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.preference.CheckBoxPreference;
+import androidx.preference.Preference;
+import androidx.preference.PreferenceCategory;
+import androidx.preference.PreferenceFragmentCompat;
+import androidx.preference.PreferenceManager;
+import androidx.preference.PreferenceScreen;
+import androidx.preference.PreferenceViewHolder;
 
 import org.acra.ACRA;
 
 import java.util.Map;
-import java.util.Objects;
 
 import pw.thedrhax.mosmetro.R;
 import pw.thedrhax.mosmetro.preferences.LoginFormPreference;
+import pw.thedrhax.mosmetro.preferences.LoginFormPreferenceDialogFragmentCompat;
+import pw.thedrhax.mosmetro.preferences.RangeBarPreference;
+import pw.thedrhax.mosmetro.preferences.RangeBarPreferenceDialogFragmentCompat;
 import pw.thedrhax.mosmetro.services.ConnectionService;
 import pw.thedrhax.mosmetro.updater.UpdateCheckTask;
 import pw.thedrhax.util.Listener;
@@ -67,226 +50,104 @@ import pw.thedrhax.util.Randomizer;
 import pw.thedrhax.util.Util;
 import pw.thedrhax.util.Version;
 
-public class SettingsActivity extends AppCompatActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
-    private SettingsFragment fragment;
-    private Listener<Map<String,UpdateCheckTask.Branch>> branches;
-    private SharedPreferences settings;
+public class SettingsActivity extends AppCompatActivity implements
+        PreferenceFragmentCompat.OnPreferenceStartFragmentCallback {
 
-    public static class SettingsFragment extends PreferenceFragment {
-        @Override
-        public void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            addPreferencesFromResource(R.xml.preferences);
+    private static final String TITLE_TAG = "settingsActivityTitle";
+    static boolean isThemeChanged;
+    private SettingsFragment2 fragment;
+    private static Listener<Map<String,UpdateCheckTask.Branch>> branches;
+    private static SharedPreferences settings;
+    private static SettingsActivity mInstance;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setTheme(Util.getSavedTheme(this));
+        setContentView(R.layout.settings_activity);
+
+        settings = android.preference.PreferenceManager.getDefaultSharedPreferences(this);
+
+        mInstance = this;
+
+        final FragmentManager fragmentManager = getSupportFragmentManager();
+        fragment = new SettingsFragment2();
+
+        if (savedInstanceState == null) {
+            fragmentManager.beginTransaction()
+                    .replace(R.id.settings, fragment)
+                    .commit();
+            fragmentManager.executePendingTransactions();
+        } else {
+            setTitle(savedInstanceState.getCharSequence(TITLE_TAG));
         }
-    }
+        fragmentManager.addOnBackStackChangedListener(new FragmentManager.OnBackStackChangedListener() {
+            @Override
+            public void onBackStackChanged() {
+                if (fragmentManager.getBackStackEntryCount() == 0) {
+                    setTitle(R.string.app_name);
 
-    public static class NestedFragment extends PreferenceFragment {
-        protected void setTitle(String title) {
-            ActionBar bar = ((AppCompatActivity)getActivity()).getSupportActionBar();
-            if (bar != null) bar.setTitle(title);
-        }
-
-        @Override
-        public void onCreate(@Nullable Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            setHasOptionsMenu(true);
-        }
-
-        @Override
-        public void onPrepareOptionsMenu(Menu menu) {
-            super.onPrepareOptionsMenu(menu);
-            menu.clear();
-        }
-    }
-
-    public static class BranchFragment extends NestedFragment {
-        private Map<String,UpdateCheckTask.Branch> branches;
-
-        public BranchFragment branches(@NonNull Map<String, UpdateCheckTask.Branch> branches) {
-            this.branches = branches; return this;
-        }
-
-        @Override
-        public void onCreate(@Nullable Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            setTitle(getString(R.string.pref_updater_branch));
-
-            PreferenceScreen screen = getPreferenceManager().createPreferenceScreen(getActivity());
-            setPreferenceScreen(screen);
-
-            PreferenceCategory stable = new PreferenceCategory(getActivity());
-            stable.setTitle(R.string.pref_updater_branch_stable);
-            screen.addPreference(stable);
-
-            PreferenceCategory experimental = new PreferenceCategory(getActivity());
-            experimental.setTitle(R.string.pref_updater_branch_experimental);
-            screen.addPreference(experimental);
-
-            if (branches == null) return;
-            final SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getActivity());
-            for (final UpdateCheckTask.Branch branch : branches.values()) {
-                CheckBoxPreference pref = new CheckBoxPreference(getActivity()) {
-                    @Override
-                    protected void onBindView(View view) {
-                        super.onBindView(view);
-
-                        // Increase number of lines on Android 4.x
-                        // Source: https://stackoverflow.com/a/2615650
-                        TextView summary = (TextView) view.findViewById(android.R.id.summary);
-                        summary.setMaxLines(15);
+                    ActionBar actionBar = getSupportActionBar();
+                    if (actionBar != null) {
+                        actionBar.setDisplayHomeAsUpEnabled(false);
                     }
-                };
-                pref.setTitle(branch.name);
-                pref.setSummary(branch.description);
-                pref.setChecked(Version.getBranch().equals(branch.name));
-                pref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-                    @Override
-                    public boolean onPreferenceClick(Preference preference) {
-                        boolean same = Version.getBranch().equals(branch.name);
-                        ((CheckBoxPreference)preference).setChecked(same);
-                        if (!same) {
-                            settings.edit().putInt("pref_updater_ignore", 0).apply();
-                            branch.dialog().show();
-                        }
-                        getActivity().onBackPressed();
-                        return true;
-                    }
-                });
-
-                if (branch.stable) {
-                    stable.addPreference(pref);
-                } else {
-                    experimental.addPreference(pref);
                 }
             }
+        });
+        if (isThemeChanged) {
+            ActionBar actionBar = getSupportActionBar();
+            if (actionBar != null) {
+                actionBar.setDisplayHomeAsUpEnabled(true);
+            }
         }
+
+        if (Build.VERSION.SDK_INT >= 23)
+            energy_saving_setup();
+        if (Build.VERSION.SDK_INT >= 28)
+            location_permission_setup();
     }
 
-    public static class ConnectionSettingsFragment extends NestedFragment {
-        @Override
-        public void onCreate(@Nullable Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-
-            // Generate random User-Agent if it is unset
-            new Randomizer(getActivity()).cached_useragent();
-
-            setTitle(getString(R.string.pref_category_connection));
-            addPreferencesFromResource(R.xml.pref_conn);
-
-            PreferenceScreen screen = getPreferenceScreen();
-
-            final CheckBoxPreference pref_mainet = (CheckBoxPreference)
-                    screen.findPreference("pref_mainet");
-            final LoginFormPreference pref_mainet_creds = (LoginFormPreference)
-                    screen.findPreference("pref_mainet_credentials");
-            pref_mainet_creds.setEnabled(pref_mainet.isChecked());
-            pref_mainet.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    pref_mainet_creds.setEnabled((Boolean) newValue);
-                    return true;
-                }
-            });
-        }
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        // Save current activity title so we can set it again after a configuration change
+        outState.putCharSequence(TITLE_TAG, getTitle());
+        setTheme(Util.getSavedTheme(this));
     }
 
-    public static class NotificationSettingsFragment extends NestedFragment {
-        @Override
-        public void onCreate(@Nullable Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            setTitle(getString(R.string.pref_category_notifications));
-            addPreferencesFromResource(R.xml.pref_notify);
-
-            PreferenceScreen screen = getPreferenceScreen();
-
-            // Link pref_notify_foreground and pref_notify_success_lock
-            final CheckBoxPreference foreground = (CheckBoxPreference)
-                    screen.findPreference("pref_notify_foreground");
-            final CheckBoxPreference success = (CheckBoxPreference)
-                    screen.findPreference("pref_notify_success");
-            final CheckBoxPreference success_lock = (CheckBoxPreference)
-                    screen.findPreference("pref_notify_success_lock");
-            foreground.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    success.setEnabled(!((Boolean) newValue));
-                    success_lock.setEnabled(!((Boolean) newValue));
-                    return true;
-                }
-            });
-            foreground
-                    .getOnPreferenceChangeListener()
-                    .onPreferenceChange(foreground, foreground.isChecked());
+    @Override
+    public boolean onSupportNavigateUp() {
+        if (getSupportFragmentManager().popBackStackImmediate()) {
+            return true;
         }
+        return super.onSupportNavigateUp();
     }
 
-    public static class DebugSettingsFragment extends NestedFragment {
-        @Override
-        public void onCreate(@Nullable Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            setTitle(getString(R.string.pref_debug));
-            addPreferencesFromResource(R.xml.pref_debug);
-
-            Preference.OnPreferenceChangeListener reload_logger = new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    PreferenceManager.getDefaultSharedPreferences(getActivity())
-                            .edit()
-                            .putBoolean(preference.getKey(), (Boolean) newValue)
-                            .apply();
-                    Logger.configure(getActivity());
-                    return true;
-                }
-            };
-
-            CheckBoxPreference pref_debug_logcat =
-                    (CheckBoxPreference) getPreferenceScreen().findPreference("pref_debug_logcat");
-            pref_debug_logcat.setOnPreferenceChangeListener(reload_logger);
+    @Override
+    public boolean onPreferenceStartFragment(PreferenceFragmentCompat caller, Preference pref) {
+        // Instantiate the new Fragment
+        final Bundle args = pref.getExtras();
+        final Fragment fragment = getSupportFragmentManager().getFragmentFactory().instantiate(
+                getClassLoader(),
+                pref.getFragment());
+        fragment.setArguments(args);
+        fragment.setTargetFragment(caller, 0);
+        // Replace the existing Fragment with the new Fragment
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.settings, fragment)
+                .addToBackStack(null)
+                .commit();
+        if(pref.getTitle().equals(getResources().getString(R.string.more_information))) {
+            setTitle(R.string.about);
         }
-    }
-
-    public static class ThemesSettingsFragment extends NestedFragment {
-        @Override
-        public void onCreate(@Nullable Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            setTitle(getString(R.string.pref_themes));
-            addPreferencesFromResource(R.xml.pref_themes);
-
-            PreferenceScreen screen = getPreferenceScreen();
-
-            final CheckBoxPreference darkTheme = (CheckBoxPreference)
-                    screen.findPreference("pref_dark_theme");
-            final CheckBoxPreference AMOLEDTheme = (CheckBoxPreference)
-                    screen.findPreference("pref_AMOLED_theme");
-
-            Preference.OnPreferenceChangeListener listener = new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-
-                    ((SettingsActivity)getActivity()).onBackPressed();
-                    if (android.os.Build.VERSION.SDK_INT >= 27) {
-                        ((SettingsActivity)getActivity()).recreate();
-                    } else {
-                        Intent intent = ((SettingsActivity)getActivity()).getIntent();
-                        ((SettingsActivity)getActivity()).finish();
-                        startActivity(intent);
-                    }
-                    return true;
-                }
-            };
-
-            darkTheme.setOnPreferenceChangeListener(listener);
-            AMOLEDTheme.setOnPreferenceChangeListener(listener);
+        else {
+            setTitle(pref.getTitle());
         }
-    }
-
-    public static class AboutFragment extends NestedFragment {
-        @Override
-        public void onCreate(@Nullable Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            setTitle(getString(R.string.about));
-            addPreferencesFromResource(R.xml.about);
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(true);
         }
+        return true;
     }
 
     @Override
@@ -294,6 +155,34 @@ public class SettingsActivity extends AppCompatActivity implements SharedPrefere
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.settings_activity, menu);
         return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_donate:
+                donate_dialog();
+                return true;
+            case android.R.id.home:
+                onBackPressed();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private static void replaceFragment(String id, Fragment fragment) {
+        try {
+            mInstance.getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.settings, fragment)
+                    .addToBackStack(id)
+                    .commit();
+            ActionBar actionBar = mInstance.getSupportActionBar();
+            if (actionBar != null) {
+                actionBar.setDisplayHomeAsUpEnabled(true);
+            }
+        } catch (IllegalStateException ex) { // https://stackoverflow.com/q/7575921
+            ACRA.getErrorReporter().handleException(ex);
+        }
     }
 
     private void donate_dialog() {
@@ -332,6 +221,7 @@ public class SettingsActivity extends AppCompatActivity implements SharedPrefere
                         break;
 
                     case 3: // Communities
+                        setTitle(R.string.about);
                         replaceFragment("about", new AboutFragment());
                         break;
                 }
@@ -342,55 +232,6 @@ public class SettingsActivity extends AppCompatActivity implements SharedPrefere
                 .setTitle(R.string.action_donate)
                 .setItems(R.array.donate_options, listener)
                 .show();
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_donate:
-                donate_dialog();
-                return true;
-            case android.R.id.home:
-                onBackPressed();
-                return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-    private void update_checker_setup() {
-        // Force check
-        final Preference pref_updater_check = fragment.findPreference("pref_updater_check");
-        pref_updater_check.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-            @SuppressLint("StaticFieldLeak")
-            @Override
-            public boolean onPreferenceClick(Preference preference) {
-                new UpdateCheckTask(SettingsActivity.this) {
-                    @Override
-                    protected void onPreExecute() {
-                        super.onPreExecute();
-                        pref_updater_check.setEnabled(false);
-                    }
-
-                    @Override
-                    protected void onPostExecute(Void aVoid) {
-                        super.onPostExecute(aVoid);
-                        pref_updater_check.setEnabled(true);
-                    }
-
-                    @Override
-                    public void result(@Nullable Map<String, Branch> result) {
-                        branches.set(result);
-                    }
-                }.ignore(preference == null).force(preference != null).execute();
-                return false;
-            }
-        });
-
-        // Check for updates on start if enabled
-        if (settings.getBoolean("pref_updater_enabled", true))
-            pref_updater_check
-                    .getOnPreferenceClickListener()
-                    .onPreferenceClick(null);
     }
 
     @RequiresApi(23)
@@ -461,161 +302,348 @@ public class SettingsActivity extends AppCompatActivity implements SharedPrefere
                 dialog.show();
     }
 
-    private void replaceFragment(String id, Fragment fragment) {
-        try {
-            getFragmentManager()
-                    .beginTransaction()
-                    .replace(android.R.id.content, fragment)
-                    .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
-                    .addToBackStack(id)
-                    .commit();
-        } catch (IllegalStateException ex) { // https://stackoverflow.com/q/7575921
-            ACRA.getErrorReporter().handleException(ex);
-        }
-    }
+    public static class SettingsFragment2 extends PreferenceFragmentCompat {
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setTheme(Util.getSavedTheme(this));
+        @Override
+        public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
+            setPreferencesFromResource(R.xml.preferences, rootKey);
 
-        SharedPreferences sharedPreferences = androidx.preference.PreferenceManager.getDefaultSharedPreferences(this);
-        sharedPreferences.registerOnSharedPreferenceChangeListener(this);
+            PreferenceScreen screen = getPreferenceScreen();
 
-        // Populate preferences
-        final FragmentManager fmanager = getFragmentManager();
-        fragment = new SettingsFragment();
-        fmanager.beginTransaction()
-                .replace(android.R.id.content, fragment)
-                .commit();
-        fmanager.executePendingTransactions();
-        fmanager.addOnBackStackChangedListener(new FragmentManager.OnBackStackChangedListener() {
-            @Override
-            public void onBackStackChanged() {
-                boolean root = fmanager.getBackStackEntryCount() == 0;
+            // Hide shortcut button on Android 8+ (issue #211)
+            if (Build.VERSION.SDK_INT >= 26) {
+                Preference pref_shortcut = screen.findPreference("pref_shortcut");
+                assert pref_shortcut != null;
+                screen.removePreference(pref_shortcut);
+            }
 
-                ActionBar bar = getSupportActionBar();
-                if (bar != null) {
-                    bar.setDisplayHomeAsUpEnabled(!root);
+            // Add version name and code
+            Preference app_name = screen.findPreference("app_name");
+            assert app_name != null;
+            app_name.setSummary(getString(R.string.version, Version.getFormattedVersion()));
 
-                    if (root) { // reset to defaults
-                        bar.setTitle(R.string.app_name);
+            // Start/stop service on pref_autoconnect change
+            final CheckBoxPreference pref_autoconnect =
+                    (CheckBoxPreference) screen.findPreference("pref_autoconnect");
+            assert pref_autoconnect != null;
+            pref_autoconnect.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(Preference preference, Object o) {
+                    Context context = ((SettingsActivity) requireActivity());
+                    Intent service = new Intent(context, ConnectionService.class);
+                    if (pref_autoconnect.isChecked())
+                        service.setAction("STOP");
+                    context.startService(service);
+                    return true;
+                }
+            });
+
+            // Branch Selector
+            Preference pref_updater_branch = screen.findPreference("pref_updater_branch");
+            assert pref_updater_branch != null;
+            pref_updater_branch.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+                    Map<String,UpdateCheckTask.Branch> branch_list = branches.get();
+                    if (branch_list != null) {
+                        mInstance.setTitle(R.string.pref_updater_branch);
+                        replaceFragment("branch", new BranchFragment().branches(branch_list));
+                    } else {
+                        preference.setEnabled(false);
                     }
+                    return true;
                 }
-            }
-        });
+            });
 
-        settings = PreferenceManager.getDefaultSharedPreferences(this);
+            branches = new Listener<Map<String,UpdateCheckTask.Branch>>(null) {
+                @Override
+                public void onChange(Map<String, UpdateCheckTask.Branch> new_value) {
+                    pref_updater_branch.setEnabled(new_value != null && new_value.size() > 0);
+                }
+            };
 
-        // Hide shortcut button on Android 8+ (issue #211)
-        if (Build.VERSION.SDK_INT >= 26) {
-            Preference pref_shortcut = fragment.findPreference("pref_shortcut");
-            fragment.getPreferenceScreen().removePreference(pref_shortcut);
+            update_checker_setup();
         }
 
-        // Add version name and code
-        Preference app_name = fragment.findPreference("app_name");
-        app_name.setSummary(getString(R.string.version, Version.getFormattedVersion()));
+        private void update_checker_setup() {
+            // Force check
+            PreferenceScreen screen = getPreferenceScreen();
+            final Preference pref_updater_check = screen.findPreference("pref_updater_check");
+            assert pref_updater_check != null;
+            pref_updater_check.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                @SuppressLint("StaticFieldLeak")
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+                    new UpdateCheckTask((SettingsActivity)requireActivity()) {
+                        @Override
+                        protected void onPreExecute() {
+                            super.onPreExecute();
+                            pref_updater_check.setEnabled(false);
+                        }
 
-        // Start/stop service on pref_autoconnect change
-        final CheckBoxPreference pref_autoconnect =
-                (CheckBoxPreference) fragment.findPreference("pref_autoconnect");
-        pref_autoconnect.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-            @Override
-            public boolean onPreferenceChange(Preference preference, Object o) {
-                Context context = SettingsActivity.this;
-                Intent service = new Intent(context, ConnectionService.class);
-                if (pref_autoconnect.isChecked())
-                    service.setAction("STOP");
-                context.startService(service);
-                return true;
-            }
-        });
+                        @Override
+                        protected void onPostExecute(Void aVoid) {
+                            super.onPostExecute(aVoid);
+                            pref_updater_check.setEnabled(true);
+                        }
 
-        // Branch Selector
-        Preference pref_updater_branch = fragment.findPreference("pref_updater_branch");
-        pref_updater_branch.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-            @Override
-            public boolean onPreferenceClick(Preference preference) {
-                Map<String,UpdateCheckTask.Branch> branch_list = branches.get();
-                if (branch_list != null) {
-                    replaceFragment("branch", new BranchFragment().branches(branch_list));
-                } else {
-                    preference.setEnabled(false);
+                        @Override
+                        public void result(@Nullable Map<String, Branch> result) {
+                            branches.set(result);
+                        }
+                    }.ignore(preference == null).force(preference != null).execute();
+                    return false;
                 }
-                return true;
-            }
-        });
+            });
 
-        branches = new Listener<Map<String,UpdateCheckTask.Branch>>(null) {
-            @Override
-            public void onChange(Map<String, UpdateCheckTask.Branch> new_value) {
-                pref_updater_branch.setEnabled(new_value != null && new_value.size() > 0);
-            }
-        };
-
-        // Connection Preferences
-        Preference pref_conn = fragment.findPreference("pref_conn");
-        pref_conn.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-            @Override
-            public boolean onPreferenceClick(Preference preference) {
-                replaceFragment("conn", new ConnectionSettingsFragment());
-                return true;
-            }
-        });
-
-        // Notification Preferences
-        Preference pref_notify = fragment.findPreference("pref_notify");
-        pref_notify.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-            @Override
-            public boolean onPreferenceClick(Preference preference) {
-                replaceFragment("notify", new NotificationSettingsFragment());
-                return true;
-            }
-        });
-
-        // Debug
-        Preference pref_debug = fragment.findPreference("pref_debug");
-        pref_debug.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-            @Override
-            public boolean onPreferenceClick(Preference preference) {
-                replaceFragment("debug", new DebugSettingsFragment());
-                return true;
-            }
-        });
-
-        // Themes
-        Preference pref_themes = fragment.findPreference("pref_themes");
-        pref_themes.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-            @Override
-            public boolean onPreferenceClick(Preference preference) {
-//                replaceFragment("themes", new ThemesSettingsFragment());
-                startActivity(new Intent(SettingsActivity.this, ThemesActivity.class));
-                return true;
-            }
-        });
-
-        // About
-        Preference pref_about = fragment.findPreference("pref_about");
-        pref_about.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-            @Override
-            public boolean onPreferenceClick(Preference preference) {
-                replaceFragment("about", new AboutFragment());
-                return true;
-            }
-        });
-
-        update_checker_setup();
-        if (Build.VERSION.SDK_INT >= 23)
-            energy_saving_setup();
-        if (Build.VERSION.SDK_INT >= 28)
-            location_permission_setup();
+            // Check for updates on start if enabled
+            if (settings.getBoolean("pref_updater_enabled", true))
+                pref_updater_check
+                        .getOnPreferenceClickListener()
+                        .onPreferenceClick(null);
+        }
     }
 
-    @Override
-    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        if (key.equals("pref_dark_theme") || key.equals("pref_AMOLED_theme")) {
-            this.recreate();
+    public static class ConnectionSettingsFragment extends PreferenceFragmentCompat {
+
+        @Override
+        public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
+            setHasOptionsMenu(true);
+            setPreferencesFromResource(R.xml.pref_conn, rootKey);
+
+            // Generate random User-Agent if it is unset
+            new Randomizer(getActivity()).cached_useragent();
+
+            PreferenceScreen screen = getPreferenceScreen();
+
+            final CheckBoxPreference pref_mainet = (CheckBoxPreference)
+                    screen.findPreference("pref_mainet");
+            final LoginFormPreference pref_mainet_creds = (LoginFormPreference)
+                    screen.findPreference("pref_mainet_credentials");
+            assert pref_mainet_creds != null;
+            assert pref_mainet != null;
+            pref_mainet_creds.setEnabled(pref_mainet.isChecked());
+            pref_mainet.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(Preference preference, Object newValue) {
+                    pref_mainet_creds.setEnabled((Boolean) newValue);
+                    return true;
+                }
+            });
+        }
+
+        @Override
+        public void onDisplayPreferenceDialog(Preference preference) {
+
+            DialogFragment dialogFragment = null;
+            if (preference instanceof RangeBarPreference) {
+                dialogFragment = RangeBarPreferenceDialogFragmentCompat.newInstance(preference.getKey());
+            }
+
+            if (preference instanceof LoginFormPreference) {
+                dialogFragment = LoginFormPreferenceDialogFragmentCompat.newInstance(preference.getKey());
+            }
+
+            if (dialogFragment != null) {
+                dialogFragment.setTargetFragment(this, 0);
+                dialogFragment.show(this.getParentFragmentManager(), "androidx.preference" +
+                        ".PreferenceFragment.DIALOG");
+            } else {
+                super.onDisplayPreferenceDialog(preference);
+            }
+        }
+
+        @Override
+        public void onPrepareOptionsMenu(@NonNull Menu menu) {
+            super.onPrepareOptionsMenu(menu);
+            menu.clear();
+        }
+    }
+
+    public static class NotificationSettingsFragment extends PreferenceFragmentCompat {
+
+        @Override
+        public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
+            setHasOptionsMenu(true);
+            setPreferencesFromResource(R.xml.pref_notify, rootKey);
+
+            PreferenceScreen screen = getPreferenceScreen();
+
+            // Link pref_notify_foreground and pref_notify_success_lock
+            final CheckBoxPreference foreground = (CheckBoxPreference)
+                    screen.findPreference("pref_notify_foreground");
+            final CheckBoxPreference success = (CheckBoxPreference)
+                    screen.findPreference("pref_notify_success");
+            final CheckBoxPreference success_lock = (CheckBoxPreference)
+                    screen.findPreference("pref_notify_success_lock");
+            assert foreground != null;
+            foreground.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(Preference preference, Object newValue) {
+                    assert success != null;
+                    success.setEnabled(!((Boolean) newValue));
+                    assert success_lock != null;
+                    success_lock.setEnabled(!((Boolean) newValue));
+                    return true;
+                }
+            });
+            foreground
+                    .getOnPreferenceChangeListener()
+                    .onPreferenceChange(foreground, foreground.isChecked());
+        }
+
+        @Override
+        public void onPrepareOptionsMenu(@NonNull Menu menu) {
+            super.onPrepareOptionsMenu(menu);
+            menu.clear();
+        }
+    }
+
+    public static class DebugSettingsFragment extends PreferenceFragmentCompat {
+
+        @Override
+        public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
+            setHasOptionsMenu(true);
+            setPreferencesFromResource(R.xml.pref_debug, rootKey);
+
+            Preference.OnPreferenceChangeListener reload_logger = new Preference.OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(Preference preference, Object newValue) {
+                    PreferenceManager.getDefaultSharedPreferences(requireActivity())
+                            .edit()
+                            .putBoolean(preference.getKey(), (Boolean) newValue)
+                            .apply();
+                    Logger.configure(getActivity());
+                    return true;
+                }
+            };
+
+            CheckBoxPreference pref_debug_logcat =
+                    (CheckBoxPreference) getPreferenceScreen().findPreference("pref_debug_logcat");
+            assert pref_debug_logcat != null;
+            pref_debug_logcat.setOnPreferenceChangeListener(reload_logger);
+        }
+
+        @Override
+        public void onPrepareOptionsMenu(@NonNull Menu menu) {
+            super.onPrepareOptionsMenu(menu);
+            menu.clear();
+        }
+    }
+
+    public static class ThemesSettingsFragment extends PreferenceFragmentCompat {
+
+        @Override
+        public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
+            setPreferencesFromResource(R.xml.pref_themes, rootKey);
+
+            PreferenceScreen screen = getPreferenceScreen();
+
+            final CheckBoxPreference darkTheme = (CheckBoxPreference)
+                    screen.findPreference("pref_dark_theme");
+            final CheckBoxPreference AMOLEDTheme = (CheckBoxPreference)
+                    screen.findPreference("pref_AMOLED_theme");
+
+            Preference.OnPreferenceChangeListener listener = new Preference.OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(Preference preference, Object newValue) {
+//                    Intent intent = ((SettingsActivity) requireActivity()).getIntent();
+//                    ((SettingsActivity) requireActivity()).finish();
+//                    startActivity(intent);
+                    isThemeChanged = true;
+                    ((SettingsActivity) requireActivity()).recreate();
+                    return true;
+                }
+            };
+
+            assert darkTheme != null;
+            darkTheme.setOnPreferenceChangeListener(listener);
+            assert AMOLEDTheme != null;
+            AMOLEDTheme.setOnPreferenceChangeListener(listener);
+        }
+    }
+
+    public static class BranchFragment extends PreferenceFragmentCompat {
+
+        private Map<String,UpdateCheckTask.Branch> branches;
+
+        public BranchFragment branches(@NonNull Map<String, UpdateCheckTask.Branch> branches) {
+            this.branches = branches; return this;
+        }
+
+        @Override
+        public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
+            setHasOptionsMenu(true);
+
+            PreferenceScreen screen = getPreferenceManager().createPreferenceScreen(requireActivity());
+            setPreferenceScreen(screen);
+
+            PreferenceCategory stable = new PreferenceCategory(requireActivity());
+            stable.setTitle(R.string.pref_updater_branch_stable);
+            screen.addPreference(stable);
+
+            PreferenceCategory experimental = new PreferenceCategory(requireActivity());
+            experimental.setTitle(R.string.pref_updater_branch_experimental);
+            screen.addPreference(experimental);
+
+            if (branches == null) return;
+            final SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(requireActivity());
+            for (final UpdateCheckTask.Branch branch : branches.values()) {
+                CheckBoxPreference pref = new CheckBoxPreference(requireActivity()) {
+                    @Override
+                    public void onBindViewHolder(PreferenceViewHolder holder) {
+                        super.onBindViewHolder(holder);
+
+                        // Increase number of lines on Android 4.x
+                        // Source: https://stackoverflow.com/a/2615650
+                        TextView summary = (TextView) holder.findViewById(android.R.id.summary);
+                        summary.setMaxLines(15);
+                    }
+                };
+                pref.setTitle(branch.name);
+                pref.setSummary(branch.description);
+                pref.setChecked(Version.getBranch().equals(branch.name));
+                pref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                    @Override
+                    public boolean onPreferenceClick(Preference preference) {
+                        boolean same = Version.getBranch().equals(branch.name);
+                        ((CheckBoxPreference)preference).setChecked(same);
+                        if (!same) {
+                            settings.edit().putInt("pref_updater_ignore", 0).apply();
+                            branch.dialog().show();
+                        }
+                        requireActivity().onBackPressed();
+                        return true;
+                    }
+                });
+
+                if (branch.stable) {
+                    stable.addPreference(pref);
+                } else {
+                    experimental.addPreference(pref);
+                }
+            }
+        }
+
+        @Override
+        public void onPrepareOptionsMenu(@NonNull Menu menu) {
+            super.onPrepareOptionsMenu(menu);
+            menu.clear();
+        }
+    }
+
+    public static class AboutFragment extends PreferenceFragmentCompat {
+
+        @Override
+        public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
+            setPreferencesFromResource(R.xml.about, rootKey);
+            setHasOptionsMenu(true);
+        }
+
+        @Override
+        public void onPrepareOptionsMenu(@NonNull Menu menu) {
+            super.onPrepareOptionsMenu(menu);
+            menu.clear();
         }
     }
 }

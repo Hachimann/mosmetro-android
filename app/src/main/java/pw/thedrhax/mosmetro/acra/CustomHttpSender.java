@@ -1,5 +1,9 @@
 package pw.thedrhax.mosmetro.acra;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
+
 import org.acra.ReportField;
 import org.acra.config.CoreConfiguration;
 import org.acra.data.CrashReportData;
@@ -9,9 +13,6 @@ import org.acra.sender.ReportSenderException;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
 import pw.thedrhax.util.Logger;
 
 class CustomHttpSender extends HttpSender {
@@ -36,7 +37,8 @@ class CustomHttpSender extends HttpSender {
                 report.put(ReportField.APP_VERSION_NAME, branch.toString() + " #" + build.toString());
                 report.put(ReportField.APP_VERSION_CODE, Integer.parseInt(build.toString()));
             }
-        } catch (JSONException|NumberFormatException ignored) {}
+        } catch (JSONException | NumberFormatException ignored) {
+        }
 
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(context);
         if (!settings.getBoolean("pref_debug_last_log", true)) {

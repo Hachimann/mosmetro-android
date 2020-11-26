@@ -1,21 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
     <CheckBoxPreference
-        android:key="pref_autoconnect"
-        android:title="@string/pref_autoconnect"
-        android:summary="@string/pref_autoconnect_summary"
-        android:defaultValue="true" />
+        app:defaultValue="true"
+        app:key="pref_autoconnect"
+        app:summary="@string/pref_autoconnect_summary"
+        app:title="@string/pref_autoconnect" />
 
     <Preference
-        android:title="@string/manual_connection"
-        android:summary="@string/manual_connection_summary">
+        app:summary="@string/manual_connection_summary"
+        app:title="@string/manual_connection">
 
         <intent android:action="pw.thedrhax.mosmetro.activities.DebugActivity" />
     </Preference>
 
     <Preference
-        android:title="@string/view_log"
-        android:summary="@string/view_log_summary">
+        app:summary="@string/view_log_summary"
+        app:title="@string/view_log">
 
         <intent android:action="pw.thedrhax.mosmetro.activities.DebugActivity">
             <extra android:name="view_only" android:value="true" />
@@ -23,74 +24,78 @@
     </Preference>
 
     <Preference
-        android:key="pref_shortcut"
-        android:title="@string/manual_connection_shortcut"
-        android:summary="@string/manual_connection_shortcut_summary">
+        app:key="pref_shortcut"
+        app:summary="@string/manual_connection_shortcut_summary"
+        app:title="@string/manual_connection_shortcut">
 
         <intent android:action="pw.thedrhax.mosmetro.activities.ShortcutActivity" />
     </Preference>
 
     <PreferenceCategory
-        android:key="pref_category_main"
-        android:title="@string/pref_category_main">
+        app:key="pref_category_main"
+        app:title="@string/pref_category_main">
 
         <Preference
-            android:key="pref_conn"
-            android:title="@string/pref_category_connection"
-            android:summary="@string/pref_category_connection_summary" />
+            app:fragment="pw.thedrhax.mosmetro.activities.SettingsActivity$ConnectionSettingsFragment"
+            app:key="pref_conn"
+            app:summary="@string/pref_category_connection_summary"
+            app:title="@string/pref_category_connection" />
 
         <Preference
-            android:key="pref_notify"
-            android:title="@string/pref_category_notifications"
-            android:summary="@string/pref_category_notifications_summary" />
+            app:fragment="pw.thedrhax.mosmetro.activities.SettingsActivity$NotificationSettingsFragment"
+            app:key="pref_notify"
+            app:summary="@string/pref_category_notifications_summary"
+            app:title="@string/pref_category_notifications" />
 
         <Preference
-            android:key="pref_debug"
-            android:title="@string/pref_debug"
-            android:summary="@string/pref_debug_summary" />
+            app:fragment="pw.thedrhax.mosmetro.activities.SettingsActivity$DebugSettingsFragment"
+            app:key="pref_debug"
+            app:summary="@string/pref_debug_summary"
+            app:title="@string/pref_debug" />
 
         <Preference
-            android:key="pref_themes"
-            android:title="@string/pref_themes"
-            android:summary="@string/pref_themes_summary" />
+            app:fragment="pw.thedrhax.mosmetro.activities.SettingsActivity$ThemesSettingsFragment"
+            app:key="pref_themes"
+            app:summary="@string/pref_themes_summary"
+            app:title="@string/pref_themes" />
 
     </PreferenceCategory>
 
-    <PreferenceCategory
-        android:title="@string/pref_category_updater">
+    <PreferenceCategory app:title="@string/pref_category_updater">
 
         <CheckBoxPreference
-            android:key="pref_updater_enabled"
-            android:title="@string/pref_updater_enabled"
-            android:summary="@string/pref_updater_enabled_summary"
-            android:defaultValue="true" />
+            app:defaultValue="true"
+            app:key="pref_updater_enabled"
+            app:summary="@string/pref_updater_enabled_summary"
+            app:title="@string/pref_updater_enabled" />
 
         <Preference
-            android:key="pref_updater_check"
-            android:title="@string/pref_updater_check"
-            android:summary="@string/pref_updater_check_summary" />
+            app:key="pref_updater_check"
+            app:summary="@string/pref_updater_check_summary"
+            app:title="@string/pref_updater_check" />
 
         <Preference
-            android:key="pref_updater_branch"
-            android:title="@string/pref_updater_branch"
-            android:summary="@string/pref_updater_branch_summary"
-            android:defaultValue="@string/build_branch_name"
-            android:enabled="false" />
+            app:defaultValue="@string/build_branch_name"
+            app:enabled="false"
+            app:key="pref_updater_branch"
+            app:summary="@string/pref_updater_branch_summary"
+            app:title="@string/pref_updater_branch" />
 
     </PreferenceCategory>
 
-    <PreferenceCategory
-        android:title="@string/about">
+    <PreferenceCategory app:title="@string/about">
 
         <Preference
-            android:key="app_name"
-            android:icon="@drawable/ic_launcher"
-            android:title="@string/app_name" />
+            app:icon="@drawable/ic_launcher"
+            app:key="app_name"
+            app:title="@string/app_name" />
 
         <Preference
-            android:key="pref_about"
-            android:title="@string/more_information"
-            android:summary="@string/more_information_summary" />
+            app:fragment="pw.thedrhax.mosmetro.activities.SettingsActivity$AboutFragment"
+            app:key="pref_about"
+            app:summary="@string/more_information_summary"
+            app:title="@string/more_information" />
 
     </PreferenceCategory>
+
 </PreferenceScreen>

@@ -1,17 +1,17 @@
 /**
  * Wi-Fi в метро (pw.thedrhax.mosmetro, Moscow Wi-Fi autologin)
  * Copyright © 2015 Dmitry Karikh <the.dr.hax@gmail.com>
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -19,21 +19,13 @@
 package pw.thedrhax.mosmetro.preferences;
 
 import android.annotation.TargetApi;
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.content.SharedPreferences;
 import android.content.res.TypedArray;
-import android.preference.DialogPreference;
-import android.preference.PreferenceManager;
 import android.util.AttributeSet;
-import android.view.View;
-import android.widget.TextView;
 
-import com.edmodo.rangebar.RangeBar;
+import androidx.preference.DialogPreference;
 
 import pw.thedrhax.mosmetro.R;
-import pw.thedrhax.util.Util;
 
 public class RangeBarPreference extends DialogPreference {
 
@@ -49,13 +41,23 @@ public class RangeBarPreference extends DialogPreference {
     }
 
     public RangeBarPreference(Context context, AttributeSet attrs) {
-        super(context, attrs);
+        super(context, attrs, R.attr.preferenceStyle);
         init(context, attrs);
     }
 
     @TargetApi(21)
     public RangeBarPreference(Context context) {
         super(context);
+    }
+
+    @Override
+    protected Object onGetDefaultValue(TypedArray a, int index) {
+        return a.getInt(index, 0);
+    }
+
+    @Override
+    public int getDialogLayoutResource() {
+        return R.layout.rangebar_preference;
     }
 
     private String key_min = getKey() + "_min";
@@ -74,52 +76,27 @@ public class RangeBarPreference extends DialogPreference {
         ta.recycle();
     }
 
-    @Override
-    protected void onPrepareDialogBuilder(AlertDialog.Builder builder) {
-        super.onPrepareDialogBuilder(builder);
+    public String getKey_min() {
+        return key_min;
+    }
 
-        final SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getContext());
-        final View view = View.inflate(getContext(), R.layout.rangebar_preference, null);
-        final RangeBar rangebar = (RangeBar) view.findViewById(R.id.rangebar);
+    public String getKey_max() {
+        return key_max;
+    }
 
-        rangebar.setTickCount(max - min + 1);
-        rangebar.setOnRangeBarChangeListener(new RangeBar.OnRangeBarChangeListener() {
-            private TextView rangetext = (TextView) view.findViewById(R.id.rangetext);
+    public int getDefaultMin() {
+        return defaultMin;
+    }
 
-            @Override
-            public void onIndexChangeListener(RangeBar rangeBar, int left, int right) {
-                if (left < min || left > max) {
-                    rangeBar.setLeft(min); return;
-                }
+    public int getDefaultMax() {
+        return defaultMax;
+    }
 
-                if (right < min || right > max) {
-                    rangeBar.setRight(max); return;
-                }
+    public int getMin() {
+        return min;
+    }
 
-                rangetext.setText("" + (left + min) + " - " + (right + min));
-            }
-        });
-
-        int current_min = Util.getIntPreference(getContext(), key_min, defaultMin);
-        if (current_min < min)
-            current_min = min;
-
-        int current_max = Util.getIntPreference(getContext(), key_max, defaultMax);
-        if (current_max > max)
-            current_max = max;
-
-        rangebar.setThumbIndices(current_min, current_max);
-
-        builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                settings.edit()
-                        .putInt(key_min, rangebar.getLeftIndex() + min)
-                        .putInt(key_max, rangebar.getRightIndex() + min)
-                        .apply();
-            }
-        });
-
-        builder.setView(view);
+    public int getMax() {
+        return max;
     }
 }
