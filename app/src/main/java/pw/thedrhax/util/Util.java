@@ -24,7 +24,7 @@ import android.preference.PreferenceManager;
 import androidx.appcompat.app.AppCompatDelegate;
 
 import pw.thedrhax.mosmetro.R;
-import pw.thedrhax.mosmetro.activities.ThemeDialog;
+import pw.thedrhax.mosmetro.preferences.ThemeDialogPreference;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -61,30 +61,22 @@ public final class Util {
         return sb.toString();
     }
 
-    public static int getTheme(Context context, boolean dialog) {
+    public static int getTheme(Context context) {
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(context);
         int theme = settings.getInt("pref_theme", 0);
 
-        if (theme == ThemeDialog.THEME_DARK || theme == ThemeDialog.THEME_OLED) {
+        if (theme == ThemeDialogPreference.THEME_DARK || theme == ThemeDialogPreference.THEME_OLED) {
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-        } else if (theme == ThemeDialog.THEME_LIGHT) {
+        } else if (theme == ThemeDialogPreference.THEME_LIGHT) {
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
         } else {
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
         }
 
-        if (!dialog) {
-            if (theme == ThemeDialog.THEME_OLED) {
-                return R.style.AppBaseTheme_OLED;
-            } else {
-                return R.style.AppBaseTheme;
-            }
+        if (theme == ThemeDialogPreference.THEME_OLED) {
+            return R.style.AppBaseTheme_OLED;
         } else {
-            if (theme == ThemeDialog.THEME_OLED) {
-                return R.style.AppBaseTheme_OLED_Dialog;
-            } else {
-                return R.style.AppBaseTheme_Dialog;
-            }
+            return R.style.AppBaseTheme;
         }
     }
 }

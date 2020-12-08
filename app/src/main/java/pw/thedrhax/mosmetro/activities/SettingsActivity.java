@@ -1,17 +1,17 @@
 /**
  * Wi-Fi в метро (pw.thedrhax.mosmetro, Moscow Wi-Fi autologin)
  * Copyright © 2015 Dmitry Karikh <the.dr.hax@gmail.com>
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -36,13 +36,6 @@ import android.preference.PreferenceCategory;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.preference.PreferenceScreen;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -50,12 +43,21 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+
 import org.acra.ACRA;
 
+import java.util.ArrayList;
 import java.util.Map;
 
 import pw.thedrhax.mosmetro.R;
 import pw.thedrhax.mosmetro.preferences.LoginFormPreference;
+import pw.thedrhax.mosmetro.preferences.ThemeDialogPreference;
 import pw.thedrhax.mosmetro.services.ConnectionService;
 import pw.thedrhax.mosmetro.updater.UpdateCheckTask;
 import pw.thedrhax.util.Listener;
@@ -67,7 +69,7 @@ import pw.thedrhax.util.Version;
 
 public class SettingsActivity extends AppCompatActivity {
     private SettingsFragment fragment;
-    private Listener<Map<String,UpdateCheckTask.Branch>> branches;
+    private Listener<Map<String, UpdateCheckTask.Branch>> branches;
     private SharedPreferences settings;
 
     public static class SettingsFragment extends PreferenceFragment {
@@ -80,7 +82,7 @@ public class SettingsActivity extends AppCompatActivity {
 
     public static class NestedFragment extends PreferenceFragment {
         protected void setTitle(String title) {
-            ActionBar bar = ((AppCompatActivity)getActivity()).getSupportActionBar();
+            ActionBar bar = ((AppCompatActivity) getActivity()).getSupportActionBar();
             if (bar != null) bar.setTitle(title);
         }
 
@@ -98,10 +100,11 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     public static class BranchFragment extends NestedFragment {
-        private Map<String,UpdateCheckTask.Branch> branches;
+        private Map<String, UpdateCheckTask.Branch> branches;
 
         public BranchFragment branches(@NonNull Map<String, UpdateCheckTask.Branch> branches) {
-            this.branches = branches; return this;
+            this.branches = branches;
+            return this;
         }
 
         @Override
@@ -141,7 +144,7 @@ public class SettingsActivity extends AppCompatActivity {
                     @Override
                     public boolean onPreferenceClick(Preference preference) {
                         boolean same = Version.getBranch().equals(branch.name);
-                        ((CheckBoxPreference)preference).setChecked(same);
+                        ((CheckBoxPreference) preference).setChecked(same);
                         if (!same) {
                             settings.edit().putInt("pref_updater_ignore", 0).apply();
                             branch.dialog().show();
@@ -440,7 +443,7 @@ public class SettingsActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setTheme(Util.getTheme(this, false));
+        setTheme(Util.getTheme(this));
 
         // Populate preferences
         final FragmentManager fmanager = getFragmentManager();
@@ -467,9 +470,10 @@ public class SettingsActivity extends AppCompatActivity {
 
         settings = PreferenceManager.getDefaultSharedPreferences(this);
 
+        // Shortcut preferences
+        Preference pref_shortcut = fragment.findPreference("pref_shortcut");
         // Hide shortcut button on Android 8+ (issue #211)
         if (Build.VERSION.SDK_INT >= 26) {
-            Preference pref_shortcut = fragment.findPreference("pref_shortcut");
             fragment.getPreferenceScreen().removePreference(pref_shortcut);
         }
 
@@ -497,7 +501,7 @@ public class SettingsActivity extends AppCompatActivity {
         pref_updater_branch.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
             @Override
             public boolean onPreferenceClick(Preference preference) {
-                Map<String,UpdateCheckTask.Branch> branch_list = branches.get();
+                Map<String, UpdateCheckTask.Branch> branch_list = branches.get();
                 if (branch_list != null) {
                     replaceFragment("branch", new BranchFragment().branches(branch_list));
                 } else {
@@ -507,7 +511,7 @@ public class SettingsActivity extends AppCompatActivity {
             }
         });
 
-        branches = new Listener<Map<String,UpdateCheckTask.Branch>>(null) {
+        branches = new Listener<Map<String, UpdateCheckTask.Branch>>(null) {
             @Override
             public void onChange(Map<String, UpdateCheckTask.Branch> new_value) {
                 pref_updater_branch.setEnabled(new_value != null && new_value.size() > 0);
@@ -533,6 +537,10 @@ public class SettingsActivity extends AppCompatActivity {
                 return true;
             }
         });
+
+        // Theme Preferences
+        ThemeDialogPreference pref_theme = (ThemeDialogPreference)
+                fragment.findPreference("pref_theme");
 
         // Debug
         Preference pref_debug = fragment.findPreference("pref_debug");

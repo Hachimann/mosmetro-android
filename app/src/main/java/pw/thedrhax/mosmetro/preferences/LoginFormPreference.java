@@ -2,12 +2,16 @@ package pw.thedrhax.mosmetro.preferences;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.preference.DialogPreference;
 import android.preference.PreferenceManager;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
+
+import androidx.annotation.RequiresApi;
+
 import pw.thedrhax.mosmetro.R;
 
 public class LoginFormPreference extends DialogPreference {
@@ -15,6 +19,7 @@ public class LoginFormPreference extends DialogPreference {
     private EditText text_login;
     private EditText text_password;
 
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public LoginFormPreference(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
         init(context);
@@ -30,6 +35,7 @@ public class LoginFormPreference extends DialogPreference {
         init(context);
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public LoginFormPreference(Context context) {
         super(context);
         init(context);
